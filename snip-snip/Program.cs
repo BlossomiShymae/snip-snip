@@ -26,6 +26,7 @@ return app.Execute(args);
 
 static async Task DownloadFolderAsync(CommandArgument<string> url, CancellationToken cancellationToken)
 {
+	DateTime startTime = DateTime.Now;
 	var directoryUrl = url.Value;
 	if (string.IsNullOrEmpty(directoryUrl))
 		return;
@@ -49,6 +50,9 @@ static async Task DownloadFolderAsync(CommandArgument<string> url, CancellationT
 			break;
 		pointerUrl = directories.Pop().Url;
 	}
+
+	TimeSpan duration = DateTime.Now.Subtract(startTime);
+	Print($"Duration: {duration} --- Off we go, scissors!");
 }
 
 static async Task DownloadFilesAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, Stack<(string Url, CommunityDragonFileInfo File)> directories, List<CommunityDragonFileInfo> files, CancellationToken cancellationToken)
