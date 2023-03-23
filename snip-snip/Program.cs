@@ -16,6 +16,8 @@ app.ExtendedHelpText = $@"
 CommandArgument<string> url = app.Argument<string>("URL", "Starting with https://")
 	.IsRequired();
 url.Validators.Add(new CommunityDragonUrlValidator());
+var chunk = app.Option<int>("-c|--count", "Concurrent download queue size controlled by semaphore. A lower value will slow down the request rate while avoiding overloading the server. <3 ", CommandOptionType.SingleValue);
+chunk.DefaultValue = 20;
 
 app.OnExecuteAsync(async cancellationToken =>
 {
@@ -24,7 +26,7 @@ app.OnExecuteAsync(async cancellationToken =>
 
 return app.Execute(args);
 
-static async Task DownloadFolderAsync(CommandArgument<string> url, CancellationToken cancellationToken)
+async Task DownloadFolderAsync(CommandArgument<string> url, CancellationToken cancellationToken)
 {
 	DateTime startTime = DateTime.Now;
 	var directoryUrl = url.Value;
@@ -55,8 +57,10 @@ static async Task DownloadFolderAsync(CommandArgument<string> url, CancellationT
 	Print($"Duration: {duration} --- Off we go, scissors!");
 }
 
-static async Task DownloadFilesAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, Stack<(string Url, CommunityDragonFileInfo File)> directories, List<CommunityDragonFileInfo> files, CancellationToken cancellationToken)
+async Task DownloadFilesAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, Stack<(string Url, CommunityDragonFileInfo File)> directories, List<CommunityDragonFileInfo> files, CancellationToken cancellationToken)
 {
+	int count = chunk.ParsedValue > 0 ? chunk.ParsedValue : chunk.DefaultValue;
+	SemaphoreSlim semaphoreSlim = new(count, count);
 	List<Task> downloadTasks = new();
 	foreach (CommunityDragonFileInfo file in files)
 	{
@@ -66,32 +70,37 @@ static async Task DownloadFilesAsync(HttpClient httpClient, string baseUrl, stri
 			continue;
 		}
 
-		downloadTasks.Add(DownloadFileAsync(httpClient, baseUrl, pointerUrl, outPath, file, cancellationToken));
+		downloadTasks.Add(DownloadFileAsync(httpClient, baseUrl, pointerUrl, outPath, file, semaphoreSlim, cancellationToken));
 	}
 
-	int chunkCount = 4;
-	IEnumerable<Task[]> downloadChunks = downloadTasks.Chunk(chunkCount > downloadTasks.Count ? chunkCount : downloadTasks.Count);
-	foreach (Task[] chunkedDownloadTasks in downloadChunks)
-	{
-		await Task.WhenAll(chunkedDownloadTasks);
-	}
+	await Task.WhenAll(downloadTasks);
 }
 
-static async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, CommunityDragonFileInfo file, CancellationToken cancellationToken)
+async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, CommunityDragonFileInfo file, SemaphoreSlim semaphoreSlim, CancellationToken cancellationToken)
 {
-	byte[] fileBytes = await httpClient.GetByteArrayAsync(Path.Join(pointerUrl, file.Name), cancellationToken);
-	string[] folderPath = pointerUrl
-		.Replace(baseUrl, "")
-		.Split("/")
-		.Prepend(outPath)
-		.ToArray();
-	string[] filePath = folderPath
-		.Append(file.Name)
-		.ToArray();
+	await semaphoreSlim.WaitAsync(cancellationToken);
 
-	Directory.CreateDirectory(Path.Join(folderPath));
-	await File.WriteAllBytesAsync(Path.Join(filePath), fileBytes, cancellationToken);
-	Print($"Snip! --- {Path.Join(filePath)}");
+	try
+	{
+		byte[] fileBytes = await httpClient.GetByteArrayAsync(Path.Join(pointerUrl, file.Name), cancellationToken);
+		string[] folderPath = pointerUrl
+			.Replace(baseUrl, "")
+			.Split("/")
+			.Prepend(outPath)
+			.ToArray();
+		string[] filePath = folderPath
+			.Append(file.Name)
+			.ToArray();
+
+		Directory.CreateDirectory(Path.Join(folderPath));
+		await File.WriteAllBytesAsync(Path.Join(filePath), fileBytes, cancellationToken);
+		Print($"Snip! --- {Path.Join(filePath)}");
+	}
+	finally
+	{
+		semaphoreSlim.Release();
+	}
+
 }
 
 static void Print(object value) => Console.WriteLine($"{DateTimeOffset.Now.ToUniversalTime()} {value}");
