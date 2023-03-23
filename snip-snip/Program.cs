@@ -53,6 +53,7 @@ static async Task DownloadFolderAsync(CommandArgument<string> url, CancellationT
 
 static async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, Stack<(string Url, CommunityDragonFileInfo File)> directories, List<CommunityDragonFileInfo> files, CancellationToken cancellationToken)
 {
+	List<Task> downloadTasks = new();
 	foreach (CommunityDragonFileInfo file in files)
 	{
 		if (file.Type == "directory")
@@ -61,20 +62,32 @@ static async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, strin
 			continue;
 		}
 
-		byte[] fileBytes = await httpClient.GetByteArrayAsync(Path.Join(pointerUrl, file.Name), cancellationToken);
-		string[] folderPath = pointerUrl
-			.Replace(baseUrl, "")
-			.Split("/")
-			.Prepend(outPath)
-			.ToArray();
-		string[] filePath = folderPath
-			.Append(file.Name)
-			.ToArray();
-
-		Directory.CreateDirectory(Path.Join(folderPath));
-		await File.WriteAllBytesAsync(Path.Join(filePath), fileBytes, cancellationToken);
-		Print($"Snip! --- {Path.Join(filePath)}");
+		downloadTasks.Add(GetResponseAsync(httpClient, baseUrl, pointerUrl, outPath, file, cancellationToken));
 	}
+
+	int chunkCount = 4;
+	IEnumerable<Task[]> downloadChunks = downloadTasks.Chunk(chunkCount > downloadTasks.Count ? chunkCount : downloadTasks.Count);
+	foreach (Task[] chunkedDownloadTasks in downloadChunks)
+	{
+		await Task.WhenAll(chunkedDownloadTasks);
+	}
+}
+
+static async Task GetResponseAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, CommunityDragonFileInfo file, CancellationToken cancellationToken)
+{
+	byte[] fileBytes = await httpClient.GetByteArrayAsync(Path.Join(pointerUrl, file.Name), cancellationToken);
+	string[] folderPath = pointerUrl
+		.Replace(baseUrl, "")
+		.Split("/")
+		.Prepend(outPath)
+		.ToArray();
+	string[] filePath = folderPath
+		.Append(file.Name)
+		.ToArray();
+
+	Directory.CreateDirectory(Path.Join(folderPath));
+	await File.WriteAllBytesAsync(Path.Join(filePath), fileBytes, cancellationToken);
+	Print($"Snip! --- {Path.Join(filePath)}");
 }
 
 static void Print(object value) => Console.WriteLine($"{DateTimeOffset.Now.ToUniversalTime()} {value}");
