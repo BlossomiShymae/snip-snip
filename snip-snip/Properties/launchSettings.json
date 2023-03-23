@@ -2,7 +2,7 @@
   "profiles": {
     "snip-snip": {
       "commandName": "Project",
-      "commandLineArgs": "-h"
+      "commandLineArgs": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/assets/loot/"
     }
   }
 }

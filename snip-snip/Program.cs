@@ -11,8 +11,10 @@ app.HelpOption();
 var assembly = Assembly.GetExecutingAssembly();
 app.ExtendedHelpText = $@"
 {assembly.GetName().Name} {assembly.GetName().Version}
+An alternate Community Dragon Directory Downloader.
 ";
 
+// CLI arguments and options
 CommandArgument<string> url = app.Argument<string>("URL", "Starting with https://")
 	.IsRequired();
 url.Validators.Add(new CommunityDragonUrlValidator());
@@ -26,6 +28,7 @@ app.OnExecuteAsync(async cancellationToken =>
 
 return app.Execute(args);
 
+/// Recursively download all files and directories in target folder URL.
 async Task DownloadFolderAsync(CommandArgument<string> url, CancellationToken cancellationToken)
 {
 	DateTime startTime = DateTime.Now;
@@ -39,26 +42,31 @@ async Task DownloadFolderAsync(CommandArgument<string> url, CancellationToken ca
 	string pointerUrl = $"{baseUrl}";
 	string outPath = "Out";
 	Directory.CreateDirectory(outPath);
-	Stack<(string Url, CommunityDragonFileInfo File)> directories = new();
+	Stack<string> directories = new();
 	while (true)
 	{
 		Print($"Scissors ready! --> {pointerUrl}");
 		List<CommunityDragonFileInfo>? files = await httpClient.GetFromJsonAsync<List<CommunityDragonFileInfo>>(pointerUrl, cancellationToken: cancellationToken);
+		// Empty directory!
 		if (files == null || files.Count == 0)
 			break;
 		await DownloadFilesAsync(httpClient, baseUrl, pointerUrl, outPath, directories, files, cancellationToken);
 
+		// No more directories!
 		if (directories.Count == 0)
 			break;
-		pointerUrl = directories.Pop().Url;
+		// Directory is done! Pop stack to point back up or down a directory! >w<
+		pointerUrl = directories.Pop();
 	}
 
 	TimeSpan duration = DateTime.Now.Subtract(startTime);
 	Print($"Duration: {duration} --- Off we go, scissors!");
 }
 
-async Task DownloadFilesAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, Stack<(string Url, CommunityDragonFileInfo File)> directories, List<CommunityDragonFileInfo> files, CancellationToken cancellationToken)
+/// Add files to download queue and push any directories into stack.
+async Task DownloadFilesAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, Stack<string> directories, List<CommunityDragonFileInfo> files, CancellationToken cancellationToken)
 {
+	// Limit the download queue.
 	int count = chunk.ParsedValue > 0 ? chunk.ParsedValue : chunk.DefaultValue;
 	SemaphoreSlim semaphoreSlim = new(count, count);
 	List<Task> downloadTasks = new();
@@ -66,7 +74,8 @@ async Task DownloadFilesAsync(HttpClient httpClient, string baseUrl, string poin
 	{
 		if (file.Type == "directory")
 		{
-			directories.Push((Path.Join(pointerUrl, file.Name, "/"), file));
+			// Add to directory stack! :3
+			directories.Push(Path.Join(pointerUrl, file.Name, "/"));
 			continue;
 		}
 
@@ -76,6 +85,7 @@ async Task DownloadFilesAsync(HttpClient httpClient, string baseUrl, string poin
 	await Task.WhenAll(downloadTasks);
 }
 
+/// Download file when queue slot is available.
 async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, CommunityDragonFileInfo file, SemaphoreSlim semaphoreSlim, CancellationToken cancellationToken)
 {
 	await semaphoreSlim.WaitAsync(cancellationToken);
