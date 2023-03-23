@@ -29,4 +29,4 @@ Wowie it totes worked (hopefully)! Yay!
 snip-snip can be downloaded here!
 
 ## License
-snip-snip is licensed under the terms of the GNU LGPL v3 license.
+snip-snip is licensed under the terms of the GNU LGPL v2.1 license.
