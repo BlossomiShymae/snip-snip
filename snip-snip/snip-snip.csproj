@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.0.2" />
+    <PackageReference Include="Spectre.Console" Version="0.46.1-preview.0.18" />
   </ItemGroup>
 
 </Project>
