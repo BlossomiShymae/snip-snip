@@ -43,7 +43,7 @@ static async Task DownloadFolderAsync(CommandArgument<string> url, CancellationT
 		List<CommunityDragonFileInfo>? files = await httpClient.GetFromJsonAsync<List<CommunityDragonFileInfo>>(pointerUrl, cancellationToken: cancellationToken);
 		if (files == null || files.Count == 0)
 			break;
-		await DownloadFileAsync(httpClient, baseUrl, pointerUrl, outPath, directories, files, cancellationToken);
+		await DownloadFilesAsync(httpClient, baseUrl, pointerUrl, outPath, directories, files, cancellationToken);
 
 		if (directories.Count == 0)
 			break;
@@ -51,7 +51,7 @@ static async Task DownloadFolderAsync(CommandArgument<string> url, CancellationT
 	}
 }
 
-static async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, Stack<(string Url, CommunityDragonFileInfo File)> directories, List<CommunityDragonFileInfo> files, CancellationToken cancellationToken)
+static async Task DownloadFilesAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, Stack<(string Url, CommunityDragonFileInfo File)> directories, List<CommunityDragonFileInfo> files, CancellationToken cancellationToken)
 {
 	List<Task> downloadTasks = new();
 	foreach (CommunityDragonFileInfo file in files)
@@ -62,7 +62,7 @@ static async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, strin
 			continue;
 		}
 
-		downloadTasks.Add(GetResponseAsync(httpClient, baseUrl, pointerUrl, outPath, file, cancellationToken));
+		downloadTasks.Add(DownloadFileAsync(httpClient, baseUrl, pointerUrl, outPath, file, cancellationToken));
 	}
 
 	int chunkCount = 4;
@@ -73,7 +73,7 @@ static async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, strin
 	}
 }
 
-static async Task GetResponseAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, CommunityDragonFileInfo file, CancellationToken cancellationToken)
+static async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, CommunityDragonFileInfo file, CancellationToken cancellationToken)
 {
 	byte[] fileBytes = await httpClient.GetByteArrayAsync(Path.Join(pointerUrl, file.Name), cancellationToken);
 	string[] folderPath = pointerUrl
