@@ -22,8 +22,7 @@ var chunk = app.Option<int>("-c|--count", "Concurrent download queue size contro
 chunk.DefaultValue = 20;
 var retry = app.Option<int>("-r|--retry", "Retry attempts before giving up on a file.", CommandOptionType.SingleValue);
 retry.DefaultValue = 2;
-var ff = app.Option<bool>("-f|--failfast", "Fail fast if HTTP GET file bytes request is not successful. Overrides -r|--retry.", CommandOptionType.SingleValue);
-ff.DefaultValue = false;
+var ff = app.Option<bool>("-f|--failfast", "Fail fast if HTTP GET file bytes request is not successful. Overrides -r|--retry.", CommandOptionType.NoValue);
 
 app.OnExecuteAsync(async cancellationToken =>
 {
@@ -111,7 +110,7 @@ async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string point
 		.Append(file.Name)
 		.ToArray();
 
-	bool isFailFast = ff.HasValue() ? ff.ParsedValue : ff.DefaultValue;
+	bool isFailFast = IsOptionSet(ff);
 	int attempts = retry.ParsedValue > -1 ? retry.ParsedValue + 1 : retry.DefaultValue;
 
 	for (int i = 0; i < attempts; i++)
@@ -142,6 +141,9 @@ async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string point
 }
 
 static void Print(object value) => Console.WriteLine($"{DateTime.Now:yyyy-MM-ddTHH:mm:ss} {value}");
+
+/// Use for CommandOptionType.NoValue
+static bool IsOptionSet(CommandOption option) => option.Values.Count > 0 ? true : false;
 
 record CommunityDragonFileInfo
 {
