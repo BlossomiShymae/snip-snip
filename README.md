@@ -34,5 +34,9 @@ Wowie it totes worked (hopefully)! Yay!
 
 ![image](https://user-images.githubusercontent.com/87099578/227379900-eefcc844-553b-4f66-8f46-889935270e5a.png)
 
+## "Why would I ever use this over cd-dd? If you had just realized..." 
+
+![image](https://user-images.githubusercontent.com/87099578/227405649-ccb5ef20-54b8-462e-b02c-ae0afe72e039.png)
+
 ## License
 snip-snip is licensed under the terms of the GNU LGPL v2.1 license.
