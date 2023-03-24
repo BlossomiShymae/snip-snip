@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Script to publish needlework-core for release on platforms in rid_list below.
+# Script to publish for release on platforms in rid_list below.
 import subprocess
 import os
 import zipfile
