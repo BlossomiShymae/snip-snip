@@ -7,6 +7,10 @@ Made using C# and the .NET ecosystem.
 ## Requirements
 - .NET 6 capable runtime
 - x64 Windows, Linux, or Mac
+
+## Download
+snip-snip can be downloaded [here](https://github.com/BlossomiShymae/snip-snip/releases)!
+
 ## Options
 ```shell
 -c|--count    # Concurrent download queue size controlled by semaphore. A lower value will 
@@ -29,9 +33,6 @@ Downloaded files and directories will be written in a relative folder called `Ou
 Wowie it totes worked (hopefully)! Yay!
 
 ![image](https://user-images.githubusercontent.com/87099578/227379900-eefcc844-553b-4f66-8f46-889935270e5a.png)
-
-## Download
-snip-snip can be downloaded [here](https://github.com/BlossomiShymae/snip-snip/releases)!
 
 ## License
 snip-snip is licensed under the terms of the GNU LGPL v2.1 license.
