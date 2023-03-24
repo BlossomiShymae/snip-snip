@@ -11,13 +11,14 @@ try:
 except:
   pass
 
+os.mkdir("dist", 0o666)
 assembly_name = "snip-snip"
 static_files = [os.path.abspath("README.md"), os.path.abspath("LICENSE")]
 rid_list = ['win-x64', 'linux-x64', 'osx-x64']
 zipfile_list = []
 # Publish release for platform
 for rid in rid_list:
-  result = subprocess.run(f"dotnet publish -c Release -r {rid} --no-self-contained", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  result = subprocess.run(f"dotnet publish -c Release -p:PublishSingleFile=true -o dist -r {rid} --no-self-contained", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   
   out = result.stdout.decode('utf-8').rstrip()
   if out:
