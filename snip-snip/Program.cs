@@ -129,19 +129,19 @@ async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string point
 			Console.WriteLine(ex);
 			if (isFailFast)
 			{
-				Print($"Failing fast on {Path.Join(pointerUrl, file.Name)}!");
+				Print($"Failing fast! --- {Path.Join(pointerUrl, file.Name)}");
 				Environment.FailFast(ex.ToString());
 			}
 			if (i + 1 == attempts)
-				Print($"Failed to download {Path.Join(pointerUrl, file.Name)}...");
+				Print($"Failed to download. --- {Path.Join(pointerUrl, file.Name)}");
 			else
-				Print($"Retry attempt #{i + 1} for {Path.Join(pointerUrl, file.Name)}");
+				Print($"Retry attempt #{i + 1}. --- {Path.Join(pointerUrl, file.Name)}");
 		}
 	}
 	semaphoreSlim.Release();
 }
 
-static void Print(object value) => Console.WriteLine($"{DateTimeOffset.Now.ToUniversalTime()} {value}");
+static void Print(object value) => Console.WriteLine($"{DateTime.Now:yyyy-MM-ddTHH:mm:ss} {value}");
 
 record CommunityDragonFileInfo
 {
