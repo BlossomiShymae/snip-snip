@@ -20,6 +20,10 @@ CommandArgument<string> url = app.Argument<string>("URL", "Starting with https:/
 url.Validators.Add(new CommunityDragonUrlValidator());
 var chunk = app.Option<int>("-c|--count", "Concurrent download queue size controlled by semaphore. A lower value will slow down the request rate while avoiding overloading the server. <3 ", CommandOptionType.SingleValue);
 chunk.DefaultValue = 20;
+var retry = app.Option<int>("-r|--retry", "Retry attempts before giving up on a file.", CommandOptionType.SingleValue);
+retry.DefaultValue = 2;
+var ff = app.Option<bool>("-f|--failfast", "Fail fast if HTTP GET file bytes request is not successful. Overrides -r|--retry.", CommandOptionType.SingleValue);
+ff.DefaultValue = false;
 
 app.OnExecuteAsync(async cancellationToken =>
 {
@@ -91,27 +95,43 @@ async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string point
 {
 	await semaphoreSlim.WaitAsync(cancellationToken);
 
-	try
-	{
-		byte[] fileBytes = await httpClient.GetByteArrayAsync(Path.Join(pointerUrl, file.Name), cancellationToken);
-		string[] folderPath = pointerUrl
+	string[] folderPath = pointerUrl
 			.Replace(baseUrl, "")
 			.Split("/")
 			.Prepend(outPath)
 			.ToArray();
-		string[] filePath = folderPath
-			.Append(file.Name)
-			.ToArray();
+	string[] filePath = folderPath
+		.Append(file.Name)
+		.ToArray();
 
-		Directory.CreateDirectory(Path.Join(folderPath));
-		await File.WriteAllBytesAsync(Path.Join(filePath), fileBytes, cancellationToken);
-		Print($"Snip! --- {Path.Join(filePath)}");
-	}
-	finally
+	bool isFailFast = ff.HasValue() ? ff.ParsedValue : ff.DefaultValue;
+	int attempts = retry.ParsedValue > -1 ? retry.ParsedValue + 1 : retry.DefaultValue;
+
+	for (int i = 0; i < attempts; i++)
 	{
-		semaphoreSlim.Release();
+		try
+		{
+			byte[] fileBytes = await httpClient.GetByteArrayAsync(Path.Join(pointerUrl, file.Name), cancellationToken);
+			Directory.CreateDirectory(Path.Join(folderPath));
+			await File.WriteAllBytesAsync(Path.Join(filePath), fileBytes, cancellationToken);
+			Print($"Snip! --- {Path.Join(filePath)}");
+			break;
+		}
+		catch (HttpRequestException ex)
+		{
+			Console.WriteLine(ex);
+			if (isFailFast)
+			{
+				Print($"Failing fast on {Path.Join(pointerUrl, file.Name)}!");
+				Environment.FailFast(ex.ToString());
+			}
+			if (i + 1 == attempts)
+				Print($"Failed to download {Path.Join(pointerUrl, file.Name)}...");
+			else
+				Print($"Retry attempt #{i + 1} for {Path.Join(pointerUrl, file.Name)}");
+		}
 	}
-
+	semaphoreSlim.Release();
 }
 
 static void Print(object value) => Console.WriteLine($"{DateTimeOffset.Now.ToUniversalTime()} {value}");
