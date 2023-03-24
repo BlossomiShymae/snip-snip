@@ -45,8 +45,15 @@ async Task DownloadFolderAsync(CommandArgument<string> url, CancellationToken ca
 	string baseUrl = directoryUrl.Replace(".org", ".org/json");
 	string pointerUrl = $"{baseUrl}";
 	string outPath = "Out";
-	Directory.Delete(outPath, true);
+
+	// Prepare our folders. <3
+	try
+	{
+		Directory.Delete(outPath, true);
+	}
+	catch (DirectoryNotFoundException) { }
 	Directory.CreateDirectory(outPath);
+
 	Stack<string> directories = new();
 	while (true)
 	{
