@@ -11,7 +11,11 @@ try:
 except:
   pass
 
-os.mkdir("dist", 0o666)
+try:
+  os.mkdir("dist", 0o666)
+except:
+  pass
+  
 assembly_name = "snip-snip"
 static_files = [os.path.abspath("README.md"), os.path.abspath("LICENSE")]
 rid_list = ['win-x64', 'linux-x64', 'osx-x64']
