@@ -3,6 +3,7 @@ using McMaster.Extensions.CommandLineUtils.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Http.Json;
 using System.Reflection;
+using System.Text;
 using System.Text.Json.Serialization;
 
 var app = new CommandLineApplication();
@@ -23,6 +24,7 @@ chunk.DefaultValue = 20;
 var retry = app.Option<int>("-r|--retry", "Retry attempts before giving up on a file.", CommandOptionType.SingleValue);
 retry.DefaultValue = 2;
 var ff = app.Option<bool>("-f|--failfast", "Fail fast if HTTP GET file bytes request is not successful. Overrides -r|--retry.", CommandOptionType.NoValue);
+var pull = app.Option<bool>("-p|--pull", "Pull file listing from the files exported text file so only one request is needed for the directories of files. Requires a bigger initial to load listing.", CommandOptionType.NoValue);
 
 app.OnExecuteAsync(async cancellationToken =>
 {
@@ -53,22 +55,61 @@ async Task DownloadFolderAsync(CommandArgument<string> url, CancellationToken ca
 	catch (DirectoryNotFoundException) { }
 	Directory.CreateDirectory(outPath);
 
-	Stack<string> directories = new();
-	while (true)
+	bool isPull = IsOptionSet(pull);
+	if (isPull)
 	{
 		Print($"Scissors ready! --> {pointerUrl}");
-		List<CommunityDragonFileInfo>? files = await httpClient.GetFromJsonAsync<List<CommunityDragonFileInfo>>(pointerUrl, cancellationToken: cancellationToken);
-		// Empty directory!
-		if (files == null || files.Count == 0)
-			break;
-		await DownloadFilesAsync(httpClient, baseUrl, pointerUrl, outPath, directories, files, cancellationToken);
+		string version = directoryUrl
+			.Split(".org/", StringSplitOptions.RemoveEmptyEntries)
+			.Last()
+			.Split('/', StringSplitOptions.RemoveEmptyEntries)
+			.First();
+		string exportedUrl = $"https://raw.communitydragon.org/{version}/cdragon/files.exported.txt";
+		byte[] fileBytes = await httpClient.GetByteArrayAsync(exportedUrl, cancellationToken);
+		string[] lines = Encoding.Default
+			.GetString(fileBytes)
+			.Split('\n');
+		string assetUrl = directoryUrl
+			.Split($".org/{version}/", StringSplitOptions.RemoveEmptyEntries)
+			.Last();
+		List<string> files = lines.Where(x => x.Contains(assetUrl)).ToList();
+		Print($"Safe and sound. <-- Pulled {exportedUrl}");
 
-		// No more directories!
-		if (directories.Count == 0)
-			break;
-		// Directory is done! Pop stack to point back up or down a directory! >w<
-		pointerUrl = directories.Pop();
+		// Limit the download queue.
+		int count = chunk.ParsedValue > 0 ? chunk.ParsedValue : chunk.DefaultValue;
+		SemaphoreSlim semaphoreSlim = new(count, count);
+		List<Task> downloadTasks = new();
+		foreach (string file in files)
+		{
+			if (file.Contains('/'))
+				pointerUrl = $"https://raw.communitydragon.org/json/{version}/{string.Join('/', file.Split('/', StringSplitOptions.RemoveEmptyEntries).Where(x => !x.Contains('.')))}/";
+			else
+				pointerUrl = $"https://raw.communitydragon.org/json/{version}/";
+			downloadTasks.Add(DownloadFileByNameAsync(httpClient, baseUrl, pointerUrl, outPath, file.Split('/', StringSplitOptions.RemoveEmptyEntries).Last(), semaphoreSlim, cancellationToken));
+		}
+
+		await Task.WhenAll(downloadTasks);
 	}
+	else
+	{
+		Stack<string> directories = new();
+		while (true)
+		{
+			Print($"Scissors ready! --> {pointerUrl}");
+			List<CommunityDragonFileInfo>? files = await httpClient.GetFromJsonAsync<List<CommunityDragonFileInfo>>(pointerUrl, cancellationToken: cancellationToken);
+			// Empty directory!
+			if (files == null || files.Count == 0)
+				break;
+			await DownloadFilesAsync(httpClient, baseUrl, pointerUrl, outPath, directories, files, cancellationToken);
+
+			// No more directories!
+			if (directories.Count == 0)
+				break;
+			// Directory is done! Pop stack to point back up or down a directory! >w<
+			pointerUrl = directories.Pop();
+		}
+	}
+
 
 	TimeSpan duration = DateTime.Now.Subtract(startTime);
 	Print($"Duration: {duration} --- Off we go, scissors!");
@@ -97,17 +138,17 @@ async Task DownloadFilesAsync(HttpClient httpClient, string baseUrl, string poin
 }
 
 /// Download file when queue slot is available.
-async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, CommunityDragonFileInfo file, SemaphoreSlim semaphoreSlim, CancellationToken cancellationToken)
+async Task DownloadFileByNameAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, string fileName, SemaphoreSlim semaphoreSlim, CancellationToken cancellationToken)
 {
 	await semaphoreSlim.WaitAsync(cancellationToken);
 
 	string[] folderPath = pointerUrl
 			.Replace(baseUrl, "")
-			.Split("/")
+			.Split("/", StringSplitOptions.RemoveEmptyEntries)
 			.Prepend(outPath)
 			.ToArray();
 	string[] filePath = folderPath
-		.Append(file.Name)
+		.Append(fileName)
 		.ToArray();
 
 	bool isFailFast = IsOptionSet(ff);
@@ -117,7 +158,7 @@ async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string point
 	{
 		try
 		{
-			byte[] fileBytes = await httpClient.GetByteArrayAsync(Path.Join(pointerUrl, file.Name), cancellationToken);
+			byte[] fileBytes = await httpClient.GetByteArrayAsync(Path.Join(pointerUrl, fileName), cancellationToken);
 			Directory.CreateDirectory(Path.Join(folderPath));
 			await File.WriteAllBytesAsync(Path.Join(filePath), fileBytes, cancellationToken);
 			Print($"Snip! --- {Path.Join(filePath)}");
@@ -128,17 +169,20 @@ async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string point
 			Console.WriteLine(ex);
 			if (isFailFast)
 			{
-				Print($"Failing fast! --- {Path.Join(pointerUrl, file.Name)}");
+				Print($"Failing fast! --- {Path.Join(pointerUrl, fileName)}");
 				Environment.FailFast(ex.ToString());
 			}
 			if (i + 1 == attempts)
-				Print($"Failed to download. --- {Path.Join(pointerUrl, file.Name)}");
+				Print($"Failed to download. --- {Path.Join(pointerUrl, fileName)}");
 			else
-				Print($"Retry attempt #{i + 1}. --- {Path.Join(pointerUrl, file.Name)}");
+				Print($"Retry attempt #{i + 1}. --- {Path.Join(pointerUrl, fileName)}");
 		}
 	}
 	semaphoreSlim.Release();
 }
+
+async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, CommunityDragonFileInfo file, SemaphoreSlim semaphoreSlim, CancellationToken cancellationToken)
+	=> await DownloadFileByNameAsync(httpClient, baseUrl, pointerUrl, outPath, file.Name, semaphoreSlim, cancellationToken);
 
 static void Print(object value) => Console.WriteLine($"{DateTime.Now:yyyy-MM-ddTHH:mm:ss} {value}");
 

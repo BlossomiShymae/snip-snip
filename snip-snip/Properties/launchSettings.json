@@ -3,6 +3,10 @@
     "snip-snip": {
       "commandName": "Project",
       "commandLineArgs": "https://raw.communitydragon.org/13.6/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/"
+    },
+    "--pull": {
+      "commandName": "Project",
+      "commandLineArgs": "https://raw.communitydragon.org/latest/game/data/images/\r\n--pull"
     }
   }
 }
