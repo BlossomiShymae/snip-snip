@@ -18,6 +18,9 @@ snip-snip can be downloaded [here](https://github.com/BlossomiShymae/snip-snip/r
 -r|--retry    # Retry attempts before giving up on a file.
 -f|--failfast # Fail fast if HTTP GET bytes request is not successful. 
               # Overrides -r|--retry.
+-p|--pull     # Pull file listing from the files exported text file so only one request is
+              # needed for the directories of files. Requires a bigger initial to load
+              # listing.     
 ```
 
 ## Tutorial (executable)
