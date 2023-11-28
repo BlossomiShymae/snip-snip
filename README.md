@@ -5,11 +5,23 @@ An alternate CommunityDragon Directory Downloader inspired by Ray's [cd-dd](http
 Made using C# and the .NET ecosystem.
 
 ## Requirements
+
 - .NET 6 capable runtime
 - x64 Windows, Linux, or Mac
 
 ## Download
+
 snip-snip can be downloaded [here](https://github.com/BlossomiShymae/snip-snip/releases)!
+
+### Linux
+
+If you're running a Ubuntu distro, add the runtime if not installed:
+
+```sudo apt-get install dotnet-runtime-6.0```
+
+Set executable permissions:
+
+```chmod +x ./snip-snip```
 
 ## Options
 ```shell
