@@ -39,6 +39,9 @@ namespace snip_snip
         [Option(ShortName = "", Description = "Filter the list. Non-matching paths are skipped.")]
         public string Filter { get; } = "";
 
+        [Option(ShortName = "", Description = "The maximum depth for files and directories. 0 is recursive.")]
+        public int MaxDepth { get; } = 0;
+
         public async Task OnExecuteAsync()
         {
             DateTime startTime = DateTime.Now;
@@ -88,6 +91,19 @@ namespace snip_snip
                 foreach (string file in files)
                 {
                     pointerUrl = Endpoints.GetJsonPath(file, version);
+                    // Check against max depth
+                    if (MaxDepth > 0)
+                    {
+                        // Get the path difference between base and pointer
+                        var diff = pointerUrl
+                            .Replace(baseUrl, "");
+                        // Get depth count
+                        var depth = diff
+                            .Split("/", StringSplitOptions.RemoveEmptyEntries)
+                            .Length;
+                        if (depth >= MaxDepth)
+                            continue;
+                    }
                     downloadTasks.Add(DownloadFileByNameAsync(baseUrl, pointerUrl, outPath, file.Split('/', StringSplitOptions.RemoveEmptyEntries).Last()));
                 }
 
@@ -127,6 +143,20 @@ namespace snip_snip
             {
                 if (file.Type == "directory")
                 {
+                    // Check against max depth
+                    if (MaxDepth > 0)
+                    {
+                        // Get the path difference between base and pointer
+                        var diff = Path
+                            .Join(pointerUrl, file.Name)
+                            .Replace(baseUrl, "");
+                        // Get depth count 
+                        var depth = diff
+                            .Split("/", StringSplitOptions.RemoveEmptyEntries)
+                            .Length;
+                        if (depth >= MaxDepth)
+                            continue;
+                    }
                     // Add to directory stack! :3
                     directories.Push(Path.Join(pointerUrl, file.Name, "/"));
                     continue;
