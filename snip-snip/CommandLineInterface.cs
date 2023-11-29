@@ -9,6 +9,9 @@ namespace snip_snip
 {
     public class CommandLineInterface
     {
+        public readonly HttpClient Http = new();
+        public SemaphoreSlim? Slim;
+
         [Argument(0, Description = "Starting with https://", Name = "URL")]
         [CommunityDragonUrlValidator]
         [Required]
@@ -30,11 +33,10 @@ namespace snip_snip
         {
             DateTime startTime = DateTime.Now;
             var directoryUrl = Url;
-            if (string.IsNullOrEmpty(directoryUrl))
-                return;
 
-            var httpClient = new HttpClient();
-
+            // Limit the download queue.
+            Slim = new(Count, Count);
+    
             string baseUrl = directoryUrl.Replace(".org", ".org/json");
             string pointerUrl = $"{baseUrl}";
             string outPath = "Out";
@@ -53,7 +55,7 @@ namespace snip_snip
                 Print($"Scissors ready! --> {pointerUrl}");
                 string version = Endpoints.GetVersion(directoryUrl);
                 string exportedUrl = Endpoints.GetFilesExported(version);
-                byte[] fileBytes = await httpClient.GetByteArrayAsync(exportedUrl);
+                byte[] fileBytes = await Http.GetByteArrayAsync(exportedUrl);
                 string[] lines = Encoding.Default
                     .GetString(fileBytes)
                     .Split('\n');
@@ -67,7 +69,7 @@ namespace snip_snip
                 foreach (string file in files)
                 {
                     pointerUrl = Endpoints.GetJsonPath(file, version);
-                    downloadTasks.Add(DownloadFileByNameAsync(httpClient, baseUrl, pointerUrl, outPath, file.Split('/', StringSplitOptions.RemoveEmptyEntries).Last(), semaphoreSlim));
+                    downloadTasks.Add(DownloadFileByNameAsync(baseUrl, pointerUrl, outPath, file.Split('/', StringSplitOptions.RemoveEmptyEntries).Last()));
                 }
 
                 await Task.WhenAll(downloadTasks);
@@ -78,11 +80,11 @@ namespace snip_snip
                 while (true)
                 {
                     Print($"Scissors ready! --> {pointerUrl}");
-                    List<CommunityDragonFileInfo>? files = await httpClient.GetFromJsonAsync<List<CommunityDragonFileInfo>>(pointerUrl);
+                    List<CommunityDragonFileInfo>? files = await Http.GetFromJsonAsync<List<CommunityDragonFileInfo>>(pointerUrl);
                     // Empty directory!
                     if (files == null || files.Count == 0)
                         break;
-                    await DownloadFilesAsync(httpClient, baseUrl, pointerUrl, outPath, directories, files);
+                    await DownloadFilesAsync(baseUrl, pointerUrl, outPath, directories, files);
 
                     // No more directories!
                     if (directories.Count == 0)
@@ -98,10 +100,8 @@ namespace snip_snip
         }
 
         /// Add files to download queue and push any directories into stack.
-        async Task DownloadFilesAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, Stack<string> directories, List<CommunityDragonFileInfo> files)
+        async Task DownloadFilesAsync(string baseUrl, string pointerUrl, string outPath, Stack<string> directories, List<CommunityDragonFileInfo> files)
         {
-            // Limit the download queue.
-            SemaphoreSlim semaphoreSlim = new(Count, Count);
             List<Task> downloadTasks = new();
             foreach (CommunityDragonFileInfo file in files)
             {
@@ -112,19 +112,19 @@ namespace snip_snip
                     continue;
                 }
 
-                downloadTasks.Add(DownloadFileAsync(httpClient, baseUrl, pointerUrl, outPath, file, semaphoreSlim));
+                downloadTasks.Add(DownloadFileAsync(baseUrl, pointerUrl, outPath, file));
             }
 
             await Task.WhenAll(downloadTasks);
         }
 
-        async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, CommunityDragonFileInfo file, SemaphoreSlim semaphoreSlim)
-            => await DownloadFileByNameAsync(httpClient, baseUrl, pointerUrl, outPath, file.Name, semaphoreSlim);
+        async Task DownloadFileAsync(string baseUrl, string pointerUrl, string outPath, CommunityDragonFileInfo file)
+            => await DownloadFileByNameAsync(baseUrl, pointerUrl, outPath, file.Name);
 
         /// Download file when queue slot is available.
-        async Task DownloadFileByNameAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, string fileName, SemaphoreSlim semaphoreSlim)
+        async Task DownloadFileByNameAsync(string baseUrl, string pointerUrl, string outPath, string fileName)
         {
-            await semaphoreSlim.WaitAsync();
+            await Slim!.WaitAsync();
 
             string[] folderPath = pointerUrl
                     .Replace(baseUrl, "")
@@ -141,7 +141,7 @@ namespace snip_snip
             {
                 try
                 {
-                    byte[] fileBytes = await httpClient.GetByteArrayAsync(Path.Join(pointerUrl, fileName));
+                    byte[] fileBytes = await Http.GetByteArrayAsync(Path.Join(pointerUrl, fileName));
                     Directory.CreateDirectory(Path.Join(folderPath));
                     await File.WriteAllBytesAsync(Path.Join(filePath), fileBytes);
                     Print($"Snip! --- {Path.Join(filePath)}");
@@ -161,7 +161,7 @@ namespace snip_snip
                         Print($"Retry attempt #{i + 1}. --- {Path.Join(pointerUrl, fileName)}");
                 }
             }
-            semaphoreSlim.Release();
+            Slim.Release();
         }
 
         static void Print(object value) => Console.WriteLine($"{DateTime.Now:yyyy-MM-ddTHH:mm:ss} {value}");
