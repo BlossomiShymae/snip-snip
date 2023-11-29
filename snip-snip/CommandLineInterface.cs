@@ -127,6 +127,9 @@ namespace snip_snip
             await Task.WhenAll(downloadTasks);
         }
 
+        async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, CommunityDragonFileInfo file, SemaphoreSlim semaphoreSlim)
+            => await DownloadFileByNameAsync(httpClient, baseUrl, pointerUrl, outPath, file.Name, semaphoreSlim);
+
         /// Download file when queue slot is available.
         async Task DownloadFileByNameAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, string fileName, SemaphoreSlim semaphoreSlim)
         {
@@ -170,12 +173,6 @@ namespace snip_snip
             semaphoreSlim.Release();
         }
 
-        async Task DownloadFileAsync(HttpClient httpClient, string baseUrl, string pointerUrl, string outPath, CommunityDragonFileInfo file, SemaphoreSlim semaphoreSlim)
-            => await DownloadFileByNameAsync(httpClient, baseUrl, pointerUrl, outPath, file.Name, semaphoreSlim);
-
         static void Print(object value) => Console.WriteLine($"{DateTime.Now:yyyy-MM-ddTHH:mm:ss} {value}");
-
-        /// Use for CommandOptionType.NoValue
-        static bool IsOptionSet(CommandOption option) => option.Values.Count > 0 ? true : false;
     }
 }
