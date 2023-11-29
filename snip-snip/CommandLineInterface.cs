@@ -20,7 +20,7 @@ namespace snip_snip
         [Option(Description = "Concurrent download queue size controlled by semaphore. A lower value will slow down the request rate while avoiding overloading the server. <3", Template = "-c|--count")]
         public int Count { get; } = 20;
 
-        [Option(ShortName = "r", Description = "Retry attempts before giving up on a file.")]
+        [Option(ShortName = "a", Description = "Attempts to retry before giving up on a file.")]
         public int Retry { get; } = 2;
 
         [Option(ShortName = "f", Description = "Fail fast if HTTP GET file bytes request is not successful. Overrides -r|--retry.")]
