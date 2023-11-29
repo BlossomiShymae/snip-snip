@@ -51,19 +51,13 @@ namespace snip_snip
             if (isPull)
             {
                 Print($"Scissors ready! --> {pointerUrl}");
-                string version = directoryUrl
-                    .Split(".org/", StringSplitOptions.RemoveEmptyEntries)
-                    .Last()
-                    .Split('/', StringSplitOptions.RemoveEmptyEntries)
-                    .First();
-                string exportedUrl = $"https://raw.communitydragon.org/{version}/cdragon/files.exported.txt";
+                string version = Endpoints.GetVersion(directoryUrl);
+                string exportedUrl = Endpoints.GetFilesExported(version);
                 byte[] fileBytes = await httpClient.GetByteArrayAsync(exportedUrl);
                 string[] lines = Encoding.Default
                     .GetString(fileBytes)
                     .Split('\n');
-                string assetUrl = directoryUrl
-                    .Split($".org/{version}/", StringSplitOptions.RemoveEmptyEntries)
-                    .Last();
+                string assetUrl = Endpoints.GetAsset(directoryUrl, version);
                 List<string> files = lines.Where(x => x.Contains(assetUrl)).ToList();
                 Print($"Safe and sound. <-- Pulled {exportedUrl}");
 
@@ -72,10 +66,7 @@ namespace snip_snip
                 List<Task> downloadTasks = new();
                 foreach (string file in files)
                 {
-                    if (file.Contains('/'))
-                        pointerUrl = $"https://raw.communitydragon.org/json/{version}/{string.Join('/', file.Split('/', StringSplitOptions.RemoveEmptyEntries).Where(x => !x.Contains('.')))}/";
-                    else
-                        pointerUrl = $"https://raw.communitydragon.org/json/{version}/";
+                    pointerUrl = Endpoints.GetJsonPath(file, version);
                     downloadTasks.Add(DownloadFileByNameAsync(httpClient, baseUrl, pointerUrl, outPath, file.Split('/', StringSplitOptions.RemoveEmptyEntries).Last(), semaphoreSlim));
                 }
 
