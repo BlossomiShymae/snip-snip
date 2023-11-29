@@ -23,11 +23,14 @@ namespace snip_snip
         [Option(ShortName = "c", Description = "Concurrent download queue size controlled by semaphore. A lower value will slow down the request rate while avoiding overloading the server. <3")]
         public int Count { get; } = 20;
 
-        [Option(ShortName = "a", Description = "Attempts to retry before giving up on a file.")]
+        [Option(ShortName = "r", Description = "Retry attempts before giving up on a file.")]
         public int Retry { get; } = 2;
 
-        [Option(ShortName = "f", Description = "Fail fast if HTTP GET file bytes request is not successful. Overrides -r|--retry.")]
+        [Option(ShortName = "", Description = "Fail fast if HTTP GET file bytes request is not successful. Overrides -r|--retry.")]
         public bool FailFast { get; }
+
+        [Option(ShortName = "f", Description = "Force to overwrite existing files instead of skipping.")]
+        public bool Force { get; }
 
         [Option(ShortName = "p", Description = "Pull file listing from the files exported text file so only one request is needed for the directories of files. Requires a bigger initial to load listing.")]
         public bool Pull { get; }
@@ -47,7 +50,8 @@ namespace snip_snip
             // Prepare our folders. <3
             try
             {
-                Directory.Delete(outPath, true);
+                if (Force)
+                    Directory.Delete(outPath, true);
             }
             catch (DirectoryNotFoundException) { }
             Directory.CreateDirectory(outPath);
@@ -144,10 +148,17 @@ namespace snip_snip
             {
                 try
                 {
+                    var outputFilePath = Path.Join(filePath);
+                    if (!Force && File.Exists(outputFilePath))
+                    {
+                        Print($"Skipping! --- {outputFilePath}");
+                        continue;
+                    }
+
                     byte[] fileBytes = await Http.GetByteArrayAsync(Path.Join(pointerUrl, fileName));
                     Directory.CreateDirectory(Path.Join(folderPath));
-                    await File.WriteAllBytesAsync(Path.Join(filePath), fileBytes);
-                    Print($"Snip! --- {Path.Join(filePath)}");
+                    await File.WriteAllBytesAsync(outputFilePath, fileBytes);
+                    Print($"Snip! --- {outputFilePath}");
                     break;
                 }
                 catch (HttpRequestException ex)
