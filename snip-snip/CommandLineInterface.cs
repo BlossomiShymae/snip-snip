@@ -18,29 +18,29 @@ namespace snip_snip
         [Required]
         public string Url { get; } = default!;
 
-        [Option(ShortName = "o", Description = "Output folder to export files to.")]
-        public string Output { get; } = "Out";
-
         [Option(ShortName = "c", Description = "Concurrent download queue size controlled by semaphore. A lower value will slow down the request rate while avoiding overloading the server. <3")]
         public int Count { get; } = 20;
-
-        [Option(ShortName = "r", Description = "Retry attempts before giving up on a file.")]
-        public int Retry { get; } = 2;
 
         [Option(ShortName = "", Description = "Fail fast if HTTP GET file bytes request is not successful. Overrides -r|--retry.")]
         public bool FailFast { get; }
 
-        [Option(ShortName = "f", Description = "Force to overwrite existing files instead of skipping.")]
-        public bool Force { get; }
-
-        [Option(ShortName = "p", Description = "Pull file listing from the files exported text file so only one request is needed for the directories of files. Requires a bigger initial to load listing.")]
-        public bool Pull { get; }
-
         [Option(ShortName = "", Description = "Filter the list. Non-matching paths are skipped.")]
         public string Filter { get; } = "";
 
+        [Option(ShortName = "f", Description = "Force to overwrite existing files instead of skipping.")]
+        public bool Force { get; }
+
         [Option(ShortName = "", Description = "The maximum depth for files and directories. 0 is recursive.")]
         public int MaxDepth { get; } = 0;
+
+        [Option(ShortName = "o", Description = "Output folder for exported files.")]
+        public string Output { get; } = "Out";
+
+        [Option(ShortName = "p", Description = "Pull file listing from files.exported.txt to use instead of JSON listing. Requires an initial download to load listing.")]
+        public bool Pull { get; }
+
+        [Option(ShortName = "r", Description = "Retry attempts before giving up on a file.")]
+        public int Retry { get; } = 2;
 
         public async Task OnExecuteAsync()
         {
