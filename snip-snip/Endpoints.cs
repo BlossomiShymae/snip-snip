@@ -21,9 +21,13 @@ namespace snip_snip
 
         public static string GetAsset(string url, string version)
         {
-            return url
-                .Split($".org/{version}/", StringSplitOptions.RemoveEmptyEntries)
-                .Last();
+            var entries = url
+                .Split($".org/{version}/", StringSplitOptions.RemoveEmptyEntries);
+
+            if (entries.Length > 1)
+                return entries.Last();
+            else
+                return string.Empty;
         }
 
         public static string GetJsonPath(string file, string version)

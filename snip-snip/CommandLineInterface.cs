@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using McMaster.Extensions.CommandLineUtils;
@@ -35,6 +36,9 @@ namespace snip_snip
         [Option(ShortName = "p", Description = "Pull file listing from the files exported text file so only one request is needed for the directories of files. Requires a bigger initial to load listing.")]
         public bool Pull { get; }
 
+        [Option(ShortName = "", Description = "Filter the list. Non-matching paths are skipped.")]
+        public string Filter { get; } = "";
+
         public async Task OnExecuteAsync()
         {
             DateTime startTime = DateTime.Now;
@@ -67,11 +71,19 @@ namespace snip_snip
                     .GetString(fileBytes)
                     .Split('\n');
                 string assetUrl = Endpoints.GetAsset(directoryUrl, version);
-                List<string> files = lines.Where(x => x.Contains(assetUrl)).ToList();
+                Console.WriteLine(assetUrl);
+                List<string> files = lines
+                    .Where(x => x.Contains(assetUrl))
+                    .ToList();
+                // Filter early for better performance
+                if (!string.IsNullOrEmpty(Filter))
+                {
+                     files = files
+                        .Where(x => x.Contains(Filter))
+                        .ToList();
+                }
                 Print($"Safe and sound. <-- Pulled {exportedUrl}");
 
-                // Limit the download queue.
-                SemaphoreSlim semaphoreSlim = new(Count, Count);
                 List<Task> downloadTasks = new();
                 foreach (string file in files)
                 {
@@ -98,6 +110,7 @@ namespace snip_snip
                         break;
                     // Directory is done! Pop stack to point back up or down a directory! >w<
                     pointerUrl = directories.Pop();
+
                 }
             }
 
@@ -149,13 +162,19 @@ namespace snip_snip
                 try
                 {
                     var outputFilePath = Path.Join(filePath);
+                    var pointerPath = Path.Join(pointerUrl, fileName);
                     if (!Force && File.Exists(outputFilePath))
                     {
                         Print($"Skipping! --- {outputFilePath}");
                         continue;
                     }
+                    if (!string.IsNullOrEmpty(Filter) && !pointerPath.Contains(Filter))
+                    {
+                        Print($"Not a match! --- {pointerPath}");
+                        continue;
+                    }
 
-                    byte[] fileBytes = await Http.GetByteArrayAsync(Path.Join(pointerUrl, fileName));
+                    byte[] fileBytes = await Http.GetByteArrayAsync(pointerPath);
                     Directory.CreateDirectory(Path.Join(folderPath));
                     await File.WriteAllBytesAsync(outputFilePath, fileBytes);
                     Print($"Snip! --- {outputFilePath}");
@@ -163,7 +182,14 @@ namespace snip_snip
                 }
                 catch (HttpRequestException ex)
                 {
-                    Console.WriteLine(ex);
+                    Console.WriteLine(ex.Message);
+
+                    if (ex.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        Print($"Bad path! --- {Path.Join(pointerUrl, fileName)}");
+                        break;
+                    }
+
                     if (FailFast)
                     {
                         Print($"Failing fast! --- {Path.Join(pointerUrl, fileName)}");
