@@ -17,7 +17,10 @@ namespace snip_snip
         [Required]
         public string Url { get; } = default!;
 
-        [Option(Description = "Concurrent download queue size controlled by semaphore. A lower value will slow down the request rate while avoiding overloading the server. <3", Template = "-c|--count")]
+        [Option(ShortName = "o", Description = "Output folder to export files to.")]
+        public string Output { get; } = "Out";
+
+        [Option(ShortName = "c", Description = "Concurrent download queue size controlled by semaphore. A lower value will slow down the request rate while avoiding overloading the server. <3")]
         public int Count { get; } = 20;
 
         [Option(ShortName = "a", Description = "Attempts to retry before giving up on a file.")]
@@ -39,7 +42,7 @@ namespace snip_snip
     
             string baseUrl = directoryUrl.Replace(".org", ".org/json");
             string pointerUrl = $"{baseUrl}";
-            string outPath = "Out";
+            string outPath = Output;
 
             // Prepare our folders. <3
             try
