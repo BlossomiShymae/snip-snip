@@ -24,15 +24,27 @@ Set executable permissions:
 ```chmod +x ./snip-snip```
 
 ## Options
+
 ```shell
--c|--count    # Concurrent download queue size controlled by semaphore. A lower value will 
-              # slow down the request rate while avoiding overloading the server. <3
--r|--retry    # Retry attempts before giving up on a file.
--f|--failfast # Fail fast if HTTP GET bytes request is not successful. 
-              # Overrides -r|--retry.
--p|--pull     # Pull file listing from the files exported text file so only one request is
-              # needed for the directories of files. Requires a bigger initial to load
-              # listing.     
+# Arguments:
+  URL                      # Starting with https://
+
+# Options:
+  -c|--count <COUNT>       # Concurrent download queue size controlled by semaphore. A lower value will slow down the
+                           # request rate while avoiding overloading the server. <3
+                           # Default value is: 20.
+  --fail-fast              # Fail fast if HTTP GET file bytes request is not successful. Overrides -r|--retry.
+  --filter <FILTER>        # Filter the list. Non-matching paths are skipped.
+  -f|--force               # Force to overwrite existing files instead of skipping.
+  --max-depth <MAX_DEPTH>  # The maximum depth for files and directories. 0 is recursive.
+                           # Default value is: 0.
+  -o|--output <OUTPUT>     # Output folder for exported files.
+                           # Default value is: Out.
+  -p|--pull                # Pull file listing from files.exported.txt to use instead of JSON listing. Requires an initial
+                           # download to load listing.
+  -r|--retry <RETRY>       # Retry attempts before giving up on a file.
+                           # Default value is: 2.
+  -?|-h|--help             # Show help information.   
 ```
 
 ## Tutorial (executable)
@@ -43,7 +55,8 @@ Your binary executable may be different so keep that in mind. (°▽°)
 # Run. Limit the download semaphore queue to 16.
 ./snip-snip.exe -c 16 https://raw.communitydragon.org/latest/game/data/images/
 ```
-Downloaded files and directories will be written in a relative folder called `Out`. If `Out` already exists, it will be overwritten!
+Downloaded files and directories will be written in a relative folder called `Out` by default. If a file already exists, 
+it will be skipped by default.
 
 Wowie it totes worked (hopefully)! Yay!
 
