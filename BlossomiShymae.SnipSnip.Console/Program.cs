@@ -1,6 +1,7 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using snip_snip;
+﻿
 using System.Reflection;
+using BlossomiShymae.SnipSnip.Console;
+using McMaster.Extensions.CommandLineUtils;
 
 var app = new CommandLineApplication();
 app.HelpOption();
@@ -8,7 +9,7 @@ app.HelpOption();
 var assembly = Assembly.GetExecutingAssembly();
 app.ExtendedHelpText = $@"
 {assembly.GetName().Name} {assembly.GetName().Version}
-An alternate Community Dragon Directory Downloader.
+The alternative CommunityDragon directory downloader!
 ";
 
 await CommandLineApplication.ExecuteAsync<CommandLineInterface>(args);

@@ -1,0 +1,182 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:BlossomiShymae.SnipSnip.Desktop.ViewModels"
+        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="BlossomiShymae.SnipSnip.Desktop.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        TransparencyLevelHint="AcrylicBlur"
+        Icon="/Assets/app.ico"
+        Title="Snip Snip!"
+        Width="1280"
+        MinWidth="1280"
+        Height="720">
+    <ExperimentalAcrylicBorder>
+        <ExperimentalAcrylicBorder.Material>
+            <ExperimentalAcrylicMaterial
+                BackgroundSource="Digger"
+                TintColor="Black"
+                TintOpacity="1"
+                MaterialOpacity="0.4" />
+        </ExperimentalAcrylicBorder.Material>
+        <!-- TOPLEVEL-->
+        <Grid Margin="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <!-- CONTROL BAR -->
+            <Grid Margin="0,0,0,8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <!-- OPTIONS -->
+                <WrapPanel
+                    Margin="0,0,0,4"
+                    Grid.Row="0"
+                    Grid.Column="0">
+                    <!-- START -->
+                    <Button 
+                        Command="{Binding StartCommand}"
+                        HorizontalAlignment="Stretch"
+                        Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon
+                                Kind="Download"
+                                Width="20"
+                                Height="20"
+                                Margin="0,0,8,0" />
+                            <TextBlock
+                                Classes="H5"
+                                FontWeight="Normal">
+                                Start
+                            </TextBlock>
+                        </StackPanel>
+                    </Button>
+                    <!-- COUNT -->
+                    <NumericUpDown Value="{Binding Count}"
+                        Margin="0,0,4,0" />
+                    <TextBlock VerticalAlignment="Center"
+                        ToolTip.Tip="{Binding CountTip}"
+                        Margin="0,0,4,0">Simultaneous Count</TextBlock>
+                    <!-- MAX DEPTH -->
+                    <NumericUpDown Value="{Binding MaxDepth}" 
+                        Margin="0,0,4,0"/>
+                    <TextBlock VerticalAlignment="Center"
+                        ToolTip.Tip="{Binding MaxDepthTip}"
+                        Margin="0,0,4,0">Max Folder Depth</TextBlock>
+                    <!-- RETRY -->
+                    <NumericUpDown Value="{Binding Retry}" 
+                        Margin="0,0,4,0"/>
+                    <TextBlock VerticalAlignment="Center"
+                        ToolTip.Tip="{Binding RetryTip}"
+                        Margin="0,0,4,0">Retry Attempts</TextBlock>
+                    <!-- FAIL FAST -->
+                    <CheckBox IsChecked="{Binding FailFast}" />
+                    <TextBlock VerticalAlignment="Center"
+                        ToolTip.Tip="{Binding FailFastTip}"
+                        Margin="0,0,4,0">Fail Fast</TextBlock>
+                    <!-- FORCE -->
+                    <CheckBox IsChecked="{Binding Force}" />
+                    <TextBlock VerticalAlignment="Center"
+                        ToolTip.Tip="{Binding ForceTip}"
+                        Margin="0,0,4,0">Force</TextBlock>
+                    <!-- PULL -->
+                    <CheckBox IsChecked="{Binding Pull}" />
+                    <TextBlock VerticalAlignment="Center"
+                        ToolTip.Tip="{Binding PullTip}"
+                        Margin="0,0,4,0">Use files.exported.txt</TextBlock>
+                </WrapPanel>
+                <!-- FILTER AND OUTPUT-->
+                <Grid
+                    Margin="0,0,0,4"
+                    Grid.Row="1"
+                    Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="auto"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <!-- FILTER -->
+                    <TextBlock
+                        Margin="0,0,4,0"
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        ToolTip.Tip="{Binding FilterTip}"
+                        VerticalAlignment="Center">
+                        Search Filter
+                    </TextBlock>
+                    <TextBox 
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Margin="0,0,8,0"
+                        Text="{Binding Filter}" />
+                    <!-- OUTPUT FOLDER -->
+                    <TextBlock
+                        Margin="0,0,4,0"
+                        Grid.Row="0"
+                        Grid.Column="2"
+                        ToolTip.Tip="{Binding OutputTip}"
+                        VerticalAlignment="Center">
+                        Output Folder
+                    </TextBlock>
+                    <TextBox 
+                        Grid.Row="0"
+                        Grid.Column="3"
+                        Text="{Binding Output}" />
+                </Grid>
+                <!-- URL -->
+                <Grid
+                    Grid.Row="2"
+                    Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Margin="0,0,4,0"
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        VerticalAlignment="Center">
+                        URL
+                    </TextBlock>
+                    <TextBox
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Text="{Binding Url}"/>
+                </Grid>
+            </Grid>
+            <!-- CONSOLE -->
+            <Border 
+                Grid.Row="1"
+                Grid.Column="1"
+                BorderBrush="LightGray"
+                BorderThickness="1"
+                Padding="8">
+                <Border.Background>
+                    <SolidColorBrush Color="Black" Opacity="0.5" />
+                </Border.Background>
+                <ScrollViewer Name="ConsoleViewer">
+                    <TextBlock Text="{Binding Log}"/>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </ExperimentalAcrylicBorder>
+</Window>
