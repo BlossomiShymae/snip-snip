@@ -1,29 +1,31 @@
 # ✁ snip-snip
 
-An alternate CommunityDragon Directory Downloader inspired by Ray's [cd-dd](https://github.com/Hi-Ray/cd-dd/). 💜
+![image](./preview.png)
+
+The alternate CommunityDragon directory downloader is inspired by Ray's [cd-dd](https://github.com/Hi-Ray/cd-dd/). 💜
 
 Made using C# and the .NET ecosystem.
 
 ## Requirements
 
-- .NET 6 capable runtime
+- .NET 8 capable runtime
 - x64 Windows, Linux, or Mac
 
 ## Download
 
-snip-snip can be downloaded [here](https://github.com/BlossomiShymae/snip-snip/releases)!
+snip-snip can be downloaded [here](https://github.com/BlossomiShymae/snip-snip/releases) either desktop or console!
 
 ### Linux
 
 If you're running a Ubuntu distro, add the runtime if not installed:
 
-```sudo apt-get install dotnet-runtime-6.0```
+```sudo apt-get install dotnet-runtime-8.0```
 
 Set executable permissions:
 
 ```chmod +x ./snip-snip```
 
-## Options
+## Options (console)
 
 ```shell
 # Arguments:
@@ -47,7 +49,8 @@ Set executable permissions:
   -?|-h|--help             # Show help information.   
 ```
 
-## Tutorial (executable)
+## Tutorial (console)
+
 To make things easier, be sure to just copy and paste the exact URL of the folder you're in on CommunityDragon. Okie dokie?  :green_heart:
 
 Your binary executable may be different so keep that in mind. (°▽°)
@@ -67,4 +70,5 @@ Wowie it totes worked (hopefully)! Yay!
 ![image](https://user-images.githubusercontent.com/87099578/227405649-ccb5ef20-54b8-462e-b02c-ae0afe72e039.png)
 
 ## License
+
 snip-snip is licensed under the terms of the GNU LGPL v2.1 license.
