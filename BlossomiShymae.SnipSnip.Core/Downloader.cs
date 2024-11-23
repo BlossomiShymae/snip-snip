@@ -151,6 +151,8 @@ namespace BlossomiShymae.SnipSnip.Core
                 {
                     var outputFilePath = Path.Join(filePath);
                     var pointerPath = Path.Join(pointerUrl, name);
+                    var encodedName = Uri.EscapeDataString(name);
+                    var encodedPath = Path.Join(pointerUrl, encodedName);
                     if (!Force && File.Exists(outputFilePath))
                     {
                         Print($"Skipping! --- {outputFilePath}");
@@ -162,7 +164,7 @@ namespace BlossomiShymae.SnipSnip.Core
                         continue;
                     }
 
-                    var fileBytes = await Http.GetByteArrayAsync(pointerPath);
+                    var fileBytes = await Http.GetByteArrayAsync(encodedPath);
                     Directory.CreateDirectory(Path.Join(folderPath));
                     await File.WriteAllBytesAsync(outputFilePath, fileBytes);
                     Print($"Snip! --- {outputFilePath}");
