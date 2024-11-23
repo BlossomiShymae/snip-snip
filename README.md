@@ -10,11 +10,15 @@ This app is currently compatible with .NET 8 and higher.
   <img src="https://contrib.rocks/image?repo=BlossomiShymae/snip-snip" />
 </a>
 
-## Download
+## Usage
+
+`./snip-snip.exe https://raw.communitydragon.org/latest/game/data/images/`
+
+### Download
 
 snip-snip can be downloaded [here](https://github.com/BlossomiShymae/snip-snip/releases) here.
 
-### Linux
+#### Linux
 
 If you're running a Ubuntu distro, add the runtime if not installed:
 
@@ -24,7 +28,7 @@ Set executable permissions:
 
 ```chmod +x ./snip-snip```
 
-## Help
+### Help
 
 ```shell
 Arguments:
