@@ -1,19 +1,18 @@
-# ✁ snip-snip
+# snip-snip
 
-![image](./preview.png)
+The alternate CommunityDragon directory downloader inspired by Ray's [cd-dd](https://github.com/Hi-Ray/cd-dd/).
 
-The alternate CommunityDragon directory downloader is inspired by Ray's [cd-dd](https://github.com/Hi-Ray/cd-dd/). 💜
+This app is currently compatible with .NET 8 and higher.
 
-Made using C# and the .NET ecosystem.
+## Contributors
 
-## Requirements
-
-- .NET 8 capable runtime
-- x64 Windows, Linux, or Mac
+<a href="https://github.com/BlossomiShymae/snip-snip/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=BlossomiShymae/snip-snip" />
+</a>
 
 ## Download
 
-snip-snip can be downloaded [here](https://github.com/BlossomiShymae/snip-snip/releases) either desktop or console!
+snip-snip can be downloaded [here](https://github.com/BlossomiShymae/snip-snip/releases) here.
 
 ### Linux
 
@@ -25,50 +24,24 @@ Set executable permissions:
 
 ```chmod +x ./snip-snip```
 
-## Options (console)
+## Help
 
 ```shell
-# Arguments:
-  URL                      # Starting with https://
+Arguments:
+  0: url                          # Starting with https:// (Required)
 
-# Options:
-  -c|--count <COUNT>       # Concurrent download queue size controlled by semaphore. A lower value will slow down the
-                           # request rate while avoiding overloading the server. <3
-                           # Default value is: 20.
-  --fail-fast              # Fail fast if HTTP GET file bytes request is not successful. Overrides -r|--retry.
-  --filter <FILTER>        # Filter the list. Non-matching paths are skipped.
-  -f|--force               # Force to overwrite existing files instead of skipping.
-  --max-depth <MAX_DEPTH>  # The maximum depth for files and directories. 0 is recursive.
-                           # Default value is: 0.
-  -o|--output <OUTPUT>     # Output folder for exported files.
-                           # Default value is: Out.
-  -p|--pull                # Pull file listing from files.exported.txt to use instead of JSON listing. Requires an initial
-                           # download to load listing.
-  -r|--retry <RETRY>       # Retry attempts before giving up on a file.
-                           # Default value is: 2.
-  -?|-h|--help             # Show help information.   
+Options:
+  --filter <String>               # Filter the list. Non-matching paths are skipped.
+  -c, --count <Int32>             # Concurrent download queue size controlled by semaphore (Default: 20)
+  --max-depth <Int32>             # The maximum depth for files and directories. 0 is recursive. (Default: 0)
+  -o, --output <String>           # Output folder for downloaded files. (Default: out)
+  -f, --overwrite=<true|false>    # Force to delete the output folder if it exists. (Default: True)
+  -s, --skip                      # Skip existing files. When disabled, overwrite existing files.
+  -r, --retry <Int32>             # Retry attempts before giving up on a file. (Default: 3)
+  -h, --help                      # Show help message
+  --version                       # Show version
 ```
-
-## Tutorial (console)
-
-To make things easier, be sure to just copy and paste the exact URL of the folder you're in on CommunityDragon. Okie dokie?  :green_heart:
-
-Your binary executable may be different so keep that in mind. (°▽°)
-```shell
-# Run. Limit the download semaphore queue to 16.
-./snip-snip.exe -c 16 https://raw.communitydragon.org/latest/game/data/images/
-```
-Downloaded files and directories will be written in a relative folder called `Out` by default. If a file already exists, 
-it will be skipped by default.
-
-Wowie it totes worked (hopefully)! Yay!
-
-![image](https://user-images.githubusercontent.com/87099578/227379900-eefcc844-553b-4f66-8f46-889935270e5a.png)
-
-## "Why would I ever use this over cd-dd? If you had just realized..." 
-
-![image](https://user-images.githubusercontent.com/87099578/227405649-ccb5ef20-54b8-462e-b02c-ae0afe72e039.png)
 
 ## License
 
-snip-snip is licensed under the terms of the GNU LGPL v2.1 license.
+snip-snip is licensed under the terms of the MIT license.
