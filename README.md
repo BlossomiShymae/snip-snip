@@ -1,6 +1,6 @@
 # snip-snip
 
-The alternate CommunityDragon directory downloader inspired by Ray's [cd-dd](https://github.com/Hi-Ray/cd-dd/).
+The alternate CommunityDragon directory downloader.
 
 This app is currently compatible with .NET 8 and higher.
 
@@ -45,6 +45,18 @@ Options:
   -h, --help                      # Show help message
   --version                       # Show version
 ```
+
+## Credits
+
+### Community Dragon Directory Downloader
+
+The original directory downloader that inspired this project.
+- [Repository](https://github.com/Hi-Ray/cd-dd/)
+
+### BlossomiShymae.Smolder
+
+A package for interfacing with CommunityDragon.
+- [Repository](https://github.com/BlossomiShymae/BlossomiShymae.Smolder)
 
 ## License
 
